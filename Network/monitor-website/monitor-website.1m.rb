@@ -14,8 +14,8 @@
 
 require 'net/http'
 require 'uri'
-require_relative './setting'
-require_relative './monitor'
+require_relative './lib/setting'
+require_relative './lib/monitor'
 
 HTTP_ERRORS = [
   EOFError,
@@ -29,7 +29,6 @@ HTTP_ERRORS = [
 
 websites = []
 Setting.websites.each do |url|
-  print "---------\n"
   url = URI.parse(url)
   http = Net::HTTP.new(url.host, url.port)
   http.use_ssl = url.scheme == 'https'
@@ -40,13 +39,9 @@ Setting.websites.each do |url|
       response
     when Net::HTTPRedirection then
       location = response['location']
-      #warn "redirected to #{location}"
-      #fetch(location, limit - 1)
     end
     websites.push({code: response.code, url: url})
   rescue *HTTP_ERRORS => error
-    p "errrroreeee"
-    p error
     websites.push({code: "Wrong url!", url: url})
   end
   # For debug decomment this line:
