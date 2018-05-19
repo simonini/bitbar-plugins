@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+
 # -*- coding: utf-8 -*-
 
 # <bitbar.title>Monitor HTTP</bitbar.title>
