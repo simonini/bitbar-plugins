@@ -15,6 +15,7 @@
 require 'net/http'
 require 'uri'
 require_relative './lib/setting'
+require_relative './lib/site'
 require_relative './lib/monitor'
 
 HTTP_ERRORS = [
@@ -28,25 +29,17 @@ HTTP_ERRORS = [
 ]
 
 websites = []
+
 Setting.websites.each do |url|
-  url = URI.parse(url)
-  http = Net::HTTP.new(url.host, url.port)
-  http.use_ssl = url.scheme == 'https'
-  begin
-    response = http.get(url)
-    case response
-    when Net::HTTPSuccess then
-      response
-    when Net::HTTPRedirection then
-      location = response['location']
-    end
-    websites.push({code: response.code, url: url})
-  rescue *HTTP_ERRORS => error
-    websites.push({code: "Wrong url!", url: url})
-  end
+  url_parsed = URI.parse(url)
+  site = Site.new(url: url)
+  result = site.call()
+  websites.push(result)
+  #p result
   # For debug decomment this line:
-  # puts "#{url.host} - #{code}| href=#{url} color=##{Setting.code_color code}"
+  puts "#{url_parsed.host} - #{result[:code]}| href=#{url_parsed} color=##{Setting.code_color result[:code]}"
 end
+#p "websites: #{websites}"
 
 monitor = Monitor.new(websites: websites)
 puts monitor.get_status()
