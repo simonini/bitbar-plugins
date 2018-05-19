@@ -1,6 +1,6 @@
 class Setting
   def self.websites
-    ['http://ipy.bartucci.it', 'http://significatocanzone.it']
+    ['http://ipy.bartucci.it', 'https://significatocanzone.it']
   end
 
   def self.user
