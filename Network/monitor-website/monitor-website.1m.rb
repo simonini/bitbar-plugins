@@ -12,58 +12,52 @@
 # Monitor WEBSITE
 #
 
+require 'net/http'
+require 'uri'
+require './setting'
+require './monitor'
 
-require "net/http"
-require "uri"
-
-class Setting
-  def self.websites 
-    ['https://yourwebsite1.it', 'http://yourwebsite2.com']
-  end
-  def self.user
-    'ale'
-  end
-end
-
-
-
-def code_color code
-  if code.to_i == 200
-    return "00cc00"
-  else
-    return "ff0000"
-  end
-end
-
-def get_status websites
-  websites.each do |website|
-    code = website[:code]
-    color = "color=##{code_color code}"
-    # 401 sta per non autorizzato ma vuol dire che comunque è online
-    if code != "200" and code != "401"
-      `afplay "/Users/#{Setting.user}/bitbar/sound/alarm.mp3"`
-      return "#{website[:url]} #{website[:code]} | #{color} | #{website[:url]} | href=#{website[:url]} | #{color}"
-    end
-  end
-  return "OK | color=##{code_color 200}"
-end
+HTTP_ERRORS = [
+  EOFError,
+  Errno::ECONNRESET,
+  Errno::EINVAL,
+  Net::HTTPBadResponse,
+  Net::HTTPHeaderSyntaxError,
+  Net::ProtocolError,
+  Timeout::Error
+]
 
 websites = []
 Setting.websites.each do |url|
+  print "---------\n"
   url = URI.parse(url)
   http = Net::HTTP.new(url.host, url.port)
   http.use_ssl = url.scheme == 'https'
   begin
+    p "begin"
     response = http.get(url)
+    case response
+    when Net::HTTPSuccess then
+      response
+    when Net::HTTPRedirection then
+      location = response['location']
+      warn "redirected to #{location}"
+      p "--------------"
+      p "redirect"
+      #fetch(location, limit - 1)
+    else
+      response.value
+    end
     code = response.code
     websites.push({code: code, url: url})
-  rescue SocketError => se
+  rescue *HTTP_ERRORS => error
+    p "errrroreeee"
+    p error
     websites.push({code: "Wrong url!", url: url})
   end
   # For debug decomment this line:
-  # puts "#{url.host} - #{code}| href=#{url} color=##{code_color code}"
+  puts "#{url.host} - #{code}| href=#{url} color=##{Setting.code_color code}"
 end
 
-puts get_status(websites)
-
-
+monitor = Monitor.new(websites: websites)
+puts monitor.get_status()
